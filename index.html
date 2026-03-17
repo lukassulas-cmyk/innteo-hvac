@@ -1075,10 +1075,9 @@ function renderProtocol(c){
 function createPDF(title, callback) {
   var jsPDF = window.jspdf.jsPDF;
   var doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  var W = 210, M = 15, CW = W - 2*M; // page width, margin, content width
+  var W = 210, M = 15, CW = W - 2*M;
   var y = M;
   
-  // Helper functions
   function header() {
     doc.setFillColor(245,158,11);
     doc.rect(0,0,W,28,'F');
@@ -1117,7 +1116,11 @@ function createPDF(title, callback) {
     doc.rect(M, y, CW * 0.28, 7, 'F');
     doc.setDrawColor(209,213,219);
     doc.rect(M, y, CW, 7);
-    if(col2Label) doc.rect(M + CW*0.5, y, CW*0.5, 7);
+    if(col2Label) {
+      doc.rect(M + CW*0.5, y, CW*0.5, 7);
+      doc.setFillColor(243,244,246);
+      doc.rect(M + CW*0.5, y, CW*0.28, 7, 'F');
+    }
     doc.setFont('helvetica','bold');
     doc.setFontSize(8);
     doc.setTextColor(50,50,70);
@@ -1126,8 +1129,6 @@ function createPDF(title, callback) {
     doc.setTextColor(30,30,50);
     doc.text(String(value||'—'), M + CW*0.29, y+5);
     if(col2Label){
-      doc.setFillColor(243,244,246);
-      doc.rect(M + CW*0.5, y, CW*0.28, 7, 'F');
       doc.setFont('helvetica','bold');
       doc.setTextColor(50,50,70);
       doc.text(col2Label, M + CW*0.52, y+5);
@@ -1173,15 +1174,12 @@ function createPDF(title, callback) {
     doc.setDrawColor(200,200,200);
     doc.line(M, y+20, M+70, y+20);
     doc.line(W-M-70, y+20, W-M, y+20);
-    
-    // Add signature images if available
     if(state.sigTech) {
       try { doc.addImage(state.sigTech, 'PNG', M, y, 70, 18); } catch(e){}
     }
     if(state.sigClient) {
       try { doc.addImage(state.sigClient, 'PNG', W-M-70, y, 70, 18); } catch(e){}
     }
-    
     doc.setFontSize(7);
     doc.setTextColor(120,120,120);
     doc.text('Podpis technika', M+35, y+24, {align:'center'});
@@ -1198,26 +1196,21 @@ function createPDF(title, callback) {
   }
   
   function checkPage(needed) {
-    if(y + needed > 275) {
-      footer();
-      doc.addPage();
-      y = M;
-    }
+    if(y + needed > 275) { footer(); doc.addPage(); y = M; }
   }
   
   function space(n) { y += (n||4); }
   
-  // Call the content builder
-  callback({doc, header, section, row, wideRow, textBlock, addSignatures, footer, space, checkPage, M, W, CW, getY:function(){return y;}, setY:function(v){y=v;}});
+  callback({doc:doc, header:header, section:section, row:row, wideRow:wideRow, textBlock:textBlock, addSignatures:addSignatures, footer:footer, space:space, checkPage:checkPage, M:M, W:W, CW:CW, getY:function(){return y;}, setY:function(v){y=v;}});
   
   footer();
   return doc;
 }
-
+ 
 function downloadPDF(doc, filename) {
   doc.save(filename + '.pdf');
 }
-
+ 
 function printProtocol(f, ri) {
   var doc = createPDF('SERVISNI PROTOKOL', function(p) {
     p.header();
@@ -1236,7 +1229,7 @@ function printProtocol(f, ri) {
     p.section('Namerene hodnoty');
     p.row('HP', (f.hp||'—') + ' bar', 'LP', (f.lp||'—') + ' bar');
     p.row('Prehrati SH', (f.sh||'—') + ' K', 'Podchlazeni SC', (f.sc||'—') + ' K');
-    p.row('Privod', (f.supT||'—') + ' °C', 'Spatecka', (f.retT||'—') + ' °C');
+    p.row('Privod', (f.supT||'—') + ' °C', 'Zpatecka', (f.retT||'—') + ' °C');
     p.row('Venkovni', (f.ambT||'—') + ' °C', '', '');
     
     p.section('Provedene prace');
@@ -1258,7 +1251,7 @@ function printProtocol(f, ri) {
     p.addSignatures(f.techName, f.clientName);
   });
   
-  downloadPDF(doc, 'servisni-protokol-' + (f.clientName||'INNTEO').replace(/[^a-zA-Z0-9]/g,'_') + '-' + f.serviceDate);
+  downloadPDF(doc, 'protokol-' + (f.clientName||'INNTEO').replace(/[^a-zA-Z0-9]/g,'_') + '-' + f.serviceDate);
 }
 
 // ── CHECKLISTS ─────────────────────────────────────────────
